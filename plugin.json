@@ -1,0 +1,17 @@
+{
+    "name": "OneLogin",
+    "version": "1.0.0",
+    "description": "Sign in Piwik using OneLogin federated authentication",
+    "require": {
+        "piwik": ">=3.0.0-b1,<4.0.0-b1"
+    },
+    "authors": [
+        {
+            "email": "opensource@cogolabs.com",
+            "homepage": "https://cogolabs.com"
+        }
+    ],
+    "license": "Apache 2",
+    "keywords": ["authentication", "onelogin", "login"],
+    "homepage": "https://github.com/cogolabs/piwik-OneLogin"
+}
