@@ -7,6 +7,7 @@
     },
     "authors": [
         {
+            "name": "Cogo Labs",
             "email": "opensource@cogolabs.com",
             "homepage": "https://cogolabs.com"
         }
