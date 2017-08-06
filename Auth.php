@@ -53,7 +53,7 @@ class Auth implements \Piwik\Auth
      */
     public function authenticate()
     {
-        $login = $this->getOneLogin();
+        $login = $this->doOneLogin();
         if (!empty($login)) {
             $user = $this->userModel->getUser($login);
 
@@ -67,8 +67,15 @@ class Auth implements \Piwik\Auth
         return $this->fallbackAuth->authenticate();
     }
 
-    protected function getOneLogin()
-    {
+    private function createUser($login, $password, $email) {
+        $self = $this;
+        return Access::doAsSuperUser(function () use ($self, $login, $password, $email) {
+            $api = $self->usersManagerAPI;
+            return $api->addUser($login, $password, $email);
+        });
+    }
+
+    protected function doOneLogin() {
         if (!isset($_GET['email']) || !isset($_GET['timestamp']) || !isset($_GET['signature'])) {
             return false;
         }
@@ -90,21 +97,39 @@ class Auth implements \Piwik\Auth
             exit('invalid signature');
         }
 
+        $login = $this->getLoginByEmail($email);
+        if (empty($login) && isset($config['add_users']) && $config['add_users'] > 0) {
+            $newuser = preg_replace("/[^a-zA-Z0-9]+/", "", explode('@', $email)[0]);
+            $newpass = md5(openssl_random_pseudo_bytes(64));
+            $r = $this->createUser($newuser, $newpass, $email);
+            print_r($r);
+            exit;
+            $login = $this->getLoginByEmail($email);
+        }
+        if (empty($login)) {
+            exit("Hi $firstname $lastname ($email). No account exists for you yet. Please contact: ".$config['admin_contact']);
+        }
+        return $login;
+    }
+
+    private function getLoginByEmail($email) {
+        $login = '';
+        $user = $this->getUserByEmail($email);
+        if (is_array($user)) {
+            $login = $user['login'];
+        }
+        return $login;        
+    }
+
+    private function getUserByEmail($email) {
         $usersManager = $this->usersManagerAPI;
-        $user = Access::doAsSuperUser(function () use ($email, $usersManager) {
+        return Access::doAsSuperUser(function () use ($email, $usersManager) {
             $user = null;
             if ($usersManager->userEmailExists($email)) {
                 $user = $usersManager->getUserByEmail($email);
             }
             return $user;
         });
-        if (is_array($user)) {
-            $login = $user['login'];
-        }
-        if (empty($login)) {
-            exit("Hi $firstname $lastname ($email). For access setup, please contact: ".$config['access_contact']);
-        }
-        return $login;
     }
 
     public function setTokenAuth($token_auth)
