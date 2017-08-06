@@ -67,11 +67,11 @@ class Auth implements \Piwik\Auth
         return $this->fallbackAuth->authenticate();
     }
 
-    private function createUser($login, $password, $email) {
+    private function createUser($login, $password, $email, $alias=false) {
         $self = $this;
-        return Access::doAsSuperUser(function () use ($self, $login, $password, $email) {
+        return Access::doAsSuperUser(function () use ($self, $login, $password, $email, $alias) {
             $api = $self->usersManagerAPI;
-            return $api->addUser($login, $password, $email);
+            return $api->addUser($login, $password, $email, $alias);
         });
     }
 
@@ -101,9 +101,7 @@ class Auth implements \Piwik\Auth
         if (empty($login) && isset($config['add_users']) && $config['add_users'] > 0) {
             $newuser = preg_replace("/[^a-zA-Z0-9]+/", "", explode('@', $email)[0]);
             $newpass = md5(openssl_random_pseudo_bytes(64));
-            $r = $this->createUser($newuser, $newpass, $email);
-            print_r($r);
-            exit;
+            $r = $this->createUser($newuser, $newpass, $email, "$firstname $lastname");
             $login = $this->getLoginByEmail($email);
         }
         if (empty($login)) {
